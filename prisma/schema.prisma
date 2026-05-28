@@ -1,0 +1,58 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+  extensions = [vector]
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+model Source {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  rssUrl    String
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  articles  Article[]
+
+  @@index([active])
+}
+
+model Article {
+  id              String     @id @default(cuid())
+  title           String
+  slug            String     @unique
+  summary         String
+  url             String     @unique
+  canonicalUrl    String?
+  source          String
+  sourceId        String?
+  sourceRef       Source?    @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  publishedAt     DateTime
+  tags            String[]   @default([])
+  category        String?
+  importance      Int        @default(50)
+  difficulty      Difficulty @default(INTERMEDIATE)
+  normalizedTitle String
+  titleHash       String
+  embedding       Unsupported("vector")?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([publishedAt])
+  @@index([source])
+  @@index([category])
+  @@index([importance])
+  @@index([titleHash])
+  @@index([canonicalUrl])
+}
